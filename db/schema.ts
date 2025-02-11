@@ -58,3 +58,19 @@ export const earlyAccess = createTable("early_access", {
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });
+
+export const googleConnection = createTable("google_connection", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
+  email: text("email").notNull(),
+  name: text("name"),
+  picture: text("picture"),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  scope: text("scope").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
