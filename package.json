@@ -45,6 +45,8 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
     "date-fns": "^4.1.0",
+    "dexie": "^4.0.11",
+    "dexie-react-hooks": "^1.1.7",
     "drizzle-orm": "^0.39.2",
     "googleapis": "^144.0.0",
     "he": "^1.2.0",
