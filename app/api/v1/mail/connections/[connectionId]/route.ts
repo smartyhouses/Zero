@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { googleConnection } from "@/db/schema";
+import { connection } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
@@ -17,10 +17,8 @@ export async function DELETE(
     }
 
     await db
-      .delete(googleConnection)
-      .where(
-        and(eq(googleConnection.id, params.connectionId), eq(googleConnection.userId, userId)),
-      );
+      .delete(connection)
+      .where(and(eq(connection.id, params.connectionId), eq(connection.userId, userId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

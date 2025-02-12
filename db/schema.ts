@@ -59,7 +59,7 @@ export const earlyAccess = createTable("early_access", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
-export const googleConnection = createTable("google_connection", {
+export const connection = createTable("connection", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
@@ -70,6 +70,7 @@ export const googleConnection = createTable("google_connection", {
   accessToken: text("access_token").notNull(),
   refreshToken: text("refresh_token"),
   scope: text("scope").notNull(),
+  providerId: text("provider_id").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),

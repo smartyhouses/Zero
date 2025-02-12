@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { googleConnection } from "@/db/schema";
+import { connection } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -15,14 +15,14 @@ export async function GET(request: NextRequest) {
 
     const connections = await db
       .select({
-        id: googleConnection.id,
-        email: googleConnection.email,
-        name: googleConnection.name,
-        picture: googleConnection.picture,
-        createdAt: googleConnection.createdAt,
+        id: connection.id,
+        email: connection.email,
+        name: connection.name,
+        picture: connection.picture,
+        createdAt: connection.createdAt,
       })
-      .from(googleConnection)
-      .where(eq(googleConnection.userId, userId));
+      .from(connection)
+      .where(eq(connection.userId, userId));
 
     console.log("Found connections:", connections);
 

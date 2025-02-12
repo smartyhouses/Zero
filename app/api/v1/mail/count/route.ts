@@ -1,5 +1,5 @@
+import { createDriver } from "../../../driver";
 import { NextRequest } from "next/server";
-import { createDriver } from "../driver";
 import { account } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";

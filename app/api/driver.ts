@@ -15,10 +15,14 @@ interface MailManager {
   delete(id: string): Promise<any>;
   list(folder: string, query?: string, maxResults?: number, labelIds?: string[]): Promise<any>;
   count(): Promise<any>;
+  generateConnectionAuthUrl(userId: string): string;
+  getTokens(code: string): Promise<{ tokens: { access_token?: any; refresh_token?: any } }>;
+  getUserInfo(tokens: IConfig["auth"]): Promise<any>;
+  getScope(): string;
 }
 
 interface IConfig {
-  auth: {
+  auth?: {
     access_token: string;
     refresh_token: string;
   };
@@ -50,22 +54,13 @@ const findHtmlBody = (parts: any[]): string => {
   return "";
 };
 
-function createEmailHtml(decodedBody: string): string {
-  const sanitizedHtml = sanitizeHtml(decodedBody, {
-    allowedTags: ALLOWED_HTML_TAGS,
-    allowedAttributes: ALLOWED_HTML_ATTRIBUTES,
-    allowedStyles: ALLOWED_HTML_STYLES,
-  });
-
-  return EMAIL_HTML_TEMPLATE.replace("{{content}}", sanitizedHtml);
-}
-
 const googleDriver = (config: IConfig): MailManager => {
   const auth = new google.auth.OAuth2({
     clientId: process.env.GOOGLE_CLIENT_ID as string,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
   });
-  auth.setCredentials({ ...config.auth, scope: "https://mail.google.com/" });
+  const getScope = () => "https://mail.google.com/";
+  if (config.auth) auth.setCredentials({ ...config.auth, scope: getScope() });
   const parse = ({
     id,
     snippet,
@@ -105,6 +100,28 @@ const googleDriver = (config: IConfig): MailManager => {
   };
   const gmail = google.gmail({ version: "v1", auth });
   return {
+    getScope,
+    getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
+      const auth = new google.auth.OAuth2({
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      });
+      auth.setCredentials({ ...tokens, scope: getScope() });
+      return google.people({ version: "v1", auth }).people.get({ resourceName: "people/me" });
+    },
+    getTokens: (code: string) => {
+      return auth.getToken(code);
+    },
+    generateConnectionAuthUrl: (userId: string) => {
+      return auth.generateAuthUrl({
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
+        response_type: "code",
+        scope: getScope(),
+        access_type: "offline",
+        prompt: "consent",
+        state: userId,
+      });
+    },
     count: async () => {
       const folders = ["inbox", "spam"];
       // this sometimes fails due to wrong crednetials
