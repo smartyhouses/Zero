@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 
-export const GET = async ({ headers, nextUrl }: NextRequest) => {
+export const GET = async ({ headers }: NextRequest) => {
   const session = await auth.api.getSession({ headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
   const [foundAccount] = await db.select().from(account).where(eq(account.userId, session.user.id));

@@ -1,5 +1,6 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
+import { Resend } from "resend";
 import { db } from "@/db";
 
 type User = {
@@ -8,6 +9,8 @@ type User = {
   name?: string;
   image?: string;
 };
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -29,6 +32,36 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    sendResetPassword: async ({ user, url }) => {
+      await resend.emails.send({
+        from: "Your App <onboarding@resend.dev>", // Update this with your verified domain
+        to: user.email,
+        subject: "Reset your password",
+        html: `
+          <h2>Reset Your Password</h2>
+          <p>Click the link below to reset your password:</p>
+          <a href="${url}">${url}</a>
+          <p>If you didn't request this, you can safely ignore this email.</p>
+        `,
+      });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await resend.emails.send({
+        from: "Mail0 <onboarding@resend.dev>",
+        to: user.email,
+        subject: "Verify your email",
+        html: `
+          <h2>Verify Your Email</h2>
+          <p>Click the link below to verify your email:</p>
+          <a href="${url}">${url}</a>
+        `,
+      });
+    },
   },
   callbacks: {
     authorized: ({

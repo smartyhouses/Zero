@@ -9,56 +9,68 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { signUp, useSession } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ErrorContext } from "better-auth/client";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/lib/auth-client";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { signIn } from "@/lib/auth-client";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { z } from "zod";
 
-const signUpSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
-export default function SignUp() {
+export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-
   const { data: session } = useSession();
 
   if (session) {
     router.push("/mail");
   }
 
-  const form = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(signUpSchema),
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
+  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
     try {
-      await signUp.email({
-        email: values.email,
-        password: values.password,
-        name: values.name,
-      });
-      toast.success("Please check your email for verification.");
-      router.push("/signup/verify");
+      await signIn.email(
+        {
+          email: values.email,
+          password: values.password,
+          callbackURL: "/mail",
+        },
+        {
+          onSuccess: () => {
+            toast.success("Logged in successfully!");
+            router.push("/mail");
+          },
+          onError: (error: ErrorContext) => {
+            const errorMessage = error?.error?.message || "Invalid email or password";
+            toast.error(errorMessage);
+            setIsSubmitting(false);
+          },
+          onSettled: () => {
+            setIsSubmitting(false);
+          },
+        },
+      );
     } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "Something went wrong. Please try again.");
-    } finally {
+      console.error("Login error:", error);
+      toast.error(error.message || "An unexpected error occurred");
       setIsSubmitting(false);
     }
   };
@@ -67,19 +79,19 @@ export default function SignUp() {
     <div className="flex h-dvh w-screen items-center justify-center bg-background">
       <Card className="w-full max-w-md border-none shadow-none">
         <CardHeader className="py-5">
-          <CardTitle className="text-center">Create your Mail0 account</CardTitle>
+          <CardTitle className="text-center">Log into your Mail0 account</CardTitle>
           <p className="text-center text-sm text-gray-500 dark:text-zinc-400">
-            Create an account to continue
+            Login to your account to continue
           </p>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 uppercase">
-              {["name", "email", "password"].map((field) => (
+              {["email", "password"].map((field) => (
                 <FormField
                   control={form.control}
                   key={field}
-                  name={field as keyof z.infer<typeof signUpSchema>}
+                  name={field as keyof z.infer<typeof loginSchema>}
                   render={({ field: fieldProps }) => (
                     <FormItem className="space-y-1">
                       <FormLabel className="text-xs text-gray-600 dark:text-zinc-400">
@@ -88,16 +100,8 @@ export default function SignUp() {
                       <FormControl>
                         <Input
                           className="placeholder:text-sm"
-                          type={
-                            field === "password" ? "password" : field === "email" ? "email" : "text"
-                          }
-                          placeholder={
-                            field === "name"
-                              ? "Tyler Durden"
-                              : field === "email"
-                                ? "tylerdurden@example.com"
-                                : "••••••••••"
-                          }
+                          type={field === "password" ? "password" : "email"}
+                          placeholder={field === "email" ? "tylerdurden@example.com" : "••••••••••"}
                           {...fieldProps}
                         />
                       </FormControl>
@@ -108,10 +112,11 @@ export default function SignUp() {
               ))}
               <div className="pt-2">
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  Sign Up
+                  Login
                 </Button>
               </div>
             </form>
+
             {/* <div className="relative mb-4 mt-5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-muted"></div>
@@ -163,9 +168,9 @@ export default function SignUp() {
           </Form>
 
           <p className="mt-3 text-center text-sm text-gray-500 dark:text-zinc-400">
-            Already have an account?{" "}
-            <Link href="/login" className="underline">
-              Login
+            Don't have an account?{" "}
+            <Link href="/signup" className="underline">
+              Sign up
             </Link>
           </p>
         </CardContent>

@@ -1,10 +1,9 @@
 import { ComponentProps, useMemo, useEffect, useRef } from "react";
-import { useThread, preloadThread } from "@/hooks/use-threads";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMail } from "@/components/mail/use-mail";
+import { preloadThread } from "@/hooks/use-threads";
 import { useSession } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "../ui/skeleton";
 import { InitialThread } from "@/types";
 import { cn } from "@/lib/utils";
 
