@@ -27,7 +27,7 @@ export async function GET(
 
     if (!tokens.access_token || !tokens.refresh_token) {
       console.error("Missing tokens:", tokens);
-      return new NextResponse(JSON.stringify({ error: true }));
+      return new NextResponse(JSON.stringify({ error: "Could not get token" }), { status: 400 });
     }
 
     // Get user info using the access token
@@ -38,7 +38,9 @@ export async function GET(
 
     if (!userInfo.data?.emailAddresses?.[0]?.value) {
       console.error("Missing email in user info:", userInfo);
-      return new NextResponse(JSON.stringify({ error: true }));
+      return new NextResponse(JSON.stringify({ error: 'Missing "email" in user info' }), {
+        status: 400,
+      });
     }
 
     // Store the connection in the database

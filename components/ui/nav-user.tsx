@@ -25,20 +25,14 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { useConnections } from "@/hooks/use-connections";
 import { signOut, useSession } from "@/lib/auth-client";
 import { Tabs, TabsList, TabsTrigger } from "./tabs";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { toast } from "sonner";
-
-interface GoogleConnection {
-  id: string;
-  email: string;
-  name?: string;
-  picture?: string;
-}
 
 const ACTIVE_GMAIL_KEY = "activeGmailAccount";
 
@@ -46,47 +40,12 @@ export function NavUser() {
   const { data: session } = useSession();
   const router = useRouter();
   const { setTheme, theme } = useTheme();
-  const [connections, setConnections] = useState<GoogleConnection[]>([]);
-  const [activeAccount, setActiveAccount] = useState<GoogleConnection | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: connections, isLoading } = useConnections();
 
-  useEffect(() => {
-    const fetchConnections = async () => {
-      try {
-        const response = await fetch("/api/gmail/connections");
-        const data = await response.json();
-        setConnections(data.connections);
-
-        // Try to restore the active account from localStorage
-        const savedAccountId = localStorage.getItem(ACTIVE_GMAIL_KEY);
-        if (savedAccountId && data.connections.length > 0) {
-          const savedAccount = data.connections.find(
-            (conn: GoogleConnection) => conn.id === savedAccountId,
-          );
-          if (savedAccount) {
-            setActiveAccount(savedAccount);
-          } else {
-            setActiveAccount(data.connections[0]);
-            localStorage.setItem(ACTIVE_GMAIL_KEY, data.connections[0].id);
-          }
-        } else if (data.connections.length > 0) {
-          setActiveAccount(data.connections[0]);
-          localStorage.setItem(ACTIVE_GMAIL_KEY, data.connections[0].id);
-        }
-      } catch (error) {
-        console.error("Failed to load connections:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchConnections();
-  }, []);
-
-  const handleAccountSwitch = (connection: GoogleConnection) => {
-    setActiveAccount(connection);
-    localStorage.setItem(ACTIVE_GMAIL_KEY, connection.id);
-  };
+  const activeAccount = useMemo(() => {
+    if (!session) return null;
+    // return connections?.find(connection => connection.id === session?.connectionId)
+  }, [session, connections]);
 
   return (
     <DropdownMenu>
@@ -103,7 +62,7 @@ export function NavUser() {
                 </>
               ) : (
                 <>
-                  <Image
+                  {/* <Image
                     src={activeAccount?.picture || session?.user.image || "/logo.png"}
                     alt={activeAccount?.name || session?.user.name || "User"}
                     className="shrink-0 rounded-md"
@@ -115,7 +74,7 @@ export function NavUser() {
                       {(activeAccount?.email || session?.user.email)?.slice(0, 16)}...
                       <ChevronDown className="size-3 text-muted-foreground" />
                     </span>
-                  </div>
+                  </div> */}
                 </>
               )}
             </SidebarMenuButton>
@@ -140,10 +99,10 @@ export function NavUser() {
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="ml-1">
-                  {connections.map((connection) => (
+                  {connections?.map((connection) => (
                     <DropdownMenuItem
                       key={connection.id}
-                      onClick={() => handleAccountSwitch(connection)}
+                      // onClick={() => handleAccountSwitch(connection)}
                       className="flex items-center gap-2"
                     >
                       <Image

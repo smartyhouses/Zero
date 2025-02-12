@@ -44,6 +44,13 @@ export interface ParsedMessage {
   blobUrl: string;
 }
 
+export interface IConnection {
+  id: string;
+  email: string;
+  name?: string;
+  picture?: string;
+}
+
 export interface InitialThread {
   id: string;
   title: string;

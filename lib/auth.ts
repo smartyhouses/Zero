@@ -1,5 +1,8 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth } from "better-auth";
+import { betterAuth, BetterAuthOptions } from "better-auth";
+import { customSession } from "better-auth/plugins";
+import { connection } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { db } from "@/db";
 
@@ -16,7 +19,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : { emails: { send: async (...args: any[]) => console.log(args) } };
 
-export const auth = betterAuth({
+const options = {
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -67,22 +70,22 @@ export const auth = betterAuth({
       });
     },
   },
-  callbacks: {
-    authorized: ({
-      auth,
-      request,
-    }: {
-      auth: { user: User } | null;
-      request: Request & { nextUrl: URL };
-    }) => {
-      const isLoggedIn = !!auth?.user;
-      const isOnLoginPage = request.nextUrl.pathname.startsWith("/login");
+  plugins: [
+    customSession(async ({ user, session }) => {
+      const defaultConnection = await db
+        .select()
+        .from(connection)
+        .where(eq(connection.userId, user.id))
+        .limit(1);
+      return {
+        connectionId: defaultConnection.length ? defaultConnection.pop()?.id : null,
+        user,
+        session,
+      };
+    }),
+  ],
+} satisfies BetterAuthOptions;
 
-      if (!isLoggedIn && !isOnLoginPage) {
-        return Response.redirect(new URL("/login", request.url));
-      }
-
-      return true;
-    },
-  },
+export const auth = betterAuth({
+  ...options,
 });
