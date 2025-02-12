@@ -16,7 +16,9 @@ interface MailManager {
   list(folder: string, query?: string, maxResults?: number, labelIds?: string[]): Promise<any>;
   count(): Promise<any>;
   generateConnectionAuthUrl(userId: string): string;
-  getTokens(code: string): Promise<{ tokens: { access_token?: any; refresh_token?: any } }>;
+  getTokens(
+    code: string,
+  ): Promise<{ tokens: { access_token?: any; refresh_token?: any; expiry_date?: number } }>;
   getUserInfo(tokens: IConfig["auth"]): Promise<any>;
   getScope(): string;
 }
@@ -55,12 +57,25 @@ const findHtmlBody = (parts: any[]): string => {
 };
 
 const googleDriver = async (config: IConfig): Promise<MailManager> => {
-  const auth = new google.auth.OAuth2({
-    clientId: process.env.GOOGLE_CLIENT_ID as string,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-  });
-  const getScope = () => "https://mail.google.com/";
-  if (config.auth) auth.setCredentials({ ...config.auth, scope: getScope() });
+  const auth = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID as string,
+    process.env.GOOGLE_CLIENT_SECRET as string,
+    process.env.GOOGLE_REDIRECT_URI as string,
+  );
+
+  const getScope = () =>
+    [
+      "https://mail.google.com/",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ].join(" ");
+  if (config.auth) {
+    auth.setCredentials({
+      access_token: config.auth.access_token,
+      refresh_token: config.auth.refresh_token,
+      scope: getScope(),
+    });
+  }
   const parse = ({
     id,
     snippet,
@@ -99,27 +114,30 @@ const googleDriver = async (config: IConfig): Promise<MailManager> => {
     return { folder, q };
   };
   const gmail = google.gmail({ version: "v1", auth });
-  const codes = await auth.generateCodeVerifierAsync();
   return {
     getScope,
     getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
       auth.setCredentials({ ...tokens, scope: getScope() });
-      return google.people({ version: "v1", auth }).people.get({ resourceName: "people/me" });
+      return google
+        .people({ version: "v1", auth })
+        .people.get({ resourceName: "people/me", personFields: "names,photos,emailAddresses" });
     },
-    getTokens: (code: string) => {
-      return auth.getToken({
-        code,
-        codeVerifier: codes.codeVerifier,
-      });
+    getTokens: async <T>(code: string) => {
+      try {
+        const { tokens } = await auth.getToken(code);
+        return { tokens } as T;
+      } catch (error) {
+        console.error("Error getting tokens:", error);
+        throw error;
+      }
     },
     generateConnectionAuthUrl: (userId: string) => {
       return auth.generateAuthUrl({
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
-        scope: getScope(),
         access_type: "offline",
+        scope: getScope(),
+        include_granted_scopes: true,
         prompt: "consent",
         state: userId,
-        code_challenge: codes.codeChallenge,
       });
     },
     count: async () => {

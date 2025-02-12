@@ -46,7 +46,7 @@ export default function ConnectEmails() {
 
   const disconnectAccount = async (connectionId: string) => {
     try {
-      await fetch(`/api/gmail/connections/${connectionId}`, {
+      await fetch(`/api/v1/mail/connections/${connectionId}`, {
         method: "DELETE",
       });
       toast.success("Account disconnected successfully");

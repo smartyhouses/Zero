@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDriver } from "@/app/api/driver";
 import { connection } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { db } from "@/db";
 
 export async function GET(
@@ -23,31 +22,44 @@ export async function GET(
   const driver = await createDriver(providerId, {});
 
   try {
+    // Exchange the authorization code for tokens
     const { tokens } = await driver.getTokens(code);
 
+    if (!tokens.access_token || !tokens.refresh_token) {
+      console.error("Missing tokens:", tokens);
+      return new NextResponse(JSON.stringify({ error: true }));
+    }
+
+    // Get user info using the access token
     const userInfo = await driver.getUserInfo({
-      access_token: tokens.access_token!,
-      refresh_token: tokens.refresh_token!,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
     });
 
+    if (!userInfo.data?.emailAddresses?.[0]?.value) {
+      console.error("Missing email in user info:", userInfo);
+      return new NextResponse(JSON.stringify({ error: true }));
+    }
+
+    // Store the connection in the database
     await db.insert(connection).values({
       providerId,
       id: crypto.randomUUID(),
       userId: state,
-      email: userInfo.email,
-      name: userInfo.name,
-      picture: userInfo.picture,
+      email: userInfo.data.emailAddresses[0].value,
+      name: userInfo.data.names?.[0]?.displayName || "Unknown",
+      picture: userInfo.data.photos?.[0]?.url || "",
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
       scope: driver.getScope(),
-      expiresAt: new Date(Date.now() + 360000 * 1000),
+      expiresAt: new Date(Date.now() + (tokens.expiry_date || 3600000)),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    return new NextResponse(JSON.stringify({ success: true }));
+    return NextResponse.redirect(new URL("/connect-emails?success=true", request.url));
   } catch (error) {
     console.error("Callback error:", error);
-    return new NextResponse(JSON.stringify({ error: "Callback failed" }));
+    return new NextResponse(JSON.stringify({ error: true }));
   }
 }

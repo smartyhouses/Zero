@@ -64,7 +64,7 @@ export const connection = createTable("connection", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   name: text("name"),
   picture: text("picture"),
   accessToken: text("access_token").notNull(),
