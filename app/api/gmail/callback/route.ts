@@ -8,6 +8,14 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const state = searchParams.get("state");
 
+  // Add these scopes at the top of your GET function
+  const SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly", // For reading emails
+    "https://www.googleapis.com/auth/gmail.send", // For sending emails
+    "https://www.googleapis.com/auth/userinfo.email", // For user email info
+    "https://www.googleapis.com/auth/userinfo.profile", // For user profile info
+  ];
+
   if (!code || !state) {
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_APP_URL}/settings/email?error=missing_params`,
@@ -54,18 +62,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await db
-      .update(googleConnection)
-      .set({
-        email: userInfo.email,
-        name: userInfo.name,
-        picture: userInfo.picture,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
-        updatedAt: new Date(),
-      })
-      .where(eq(googleConnection.id, state));
+    await db.insert(googleConnection).values({
+      id: crypto.randomUUID(),
+      userId: state,
+      email: userInfo.email,
+      name: userInfo.name,
+      picture: userInfo.picture,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      scope: tokens.scope,
+      expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/connect-emails?success=true`);
   } catch (error) {

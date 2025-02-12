@@ -1,6 +1,6 @@
+import { googleConnection } from "@/db/schema";
 import { createDriver } from "../mail/driver";
 import { NextRequest } from "next/server";
-import { account } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -12,15 +12,24 @@ export const GET = async (
   const { id } = await params;
   const session = await auth.api.getSession({ headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
-  const [foundAccount] = await db.select().from(account).where(eq(account.userId, session.user.id));
-  if (!foundAccount?.accessToken || !foundAccount.refreshToken)
-    return new Response("Unauthorized", { status: 401 });
-  const driver = createDriver(foundAccount.providerId, {
+
+  // Updated to use googleConnection table
+  const [connection] = await db
+    .select()
+    .from(googleConnection)
+    .where(eq(googleConnection.userId, session.user.id));
+
+  if (!connection?.accessToken || !connection.refreshToken)
+    return new Response("Unauthorized, reconnect", { status: 402 });
+
+  const driver = createDriver("google", {
+    // Assuming "google" is the provider ID
     auth: {
-      access_token: foundAccount.accessToken,
-      refresh_token: foundAccount.refreshToken,
+      access_token: connection.accessToken,
+      refresh_token: connection.refreshToken,
     },
   });
+
   const res = await driver.get(id);
   return new Response(JSON.stringify(res));
 };
