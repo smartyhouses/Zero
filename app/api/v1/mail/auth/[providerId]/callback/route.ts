@@ -20,22 +20,11 @@ export async function GET(
 
   const { providerId } = await params;
 
-  const driver = createDriver(providerId, {});
+  const driver = await createDriver(providerId, {});
 
   try {
     const { tokens } = await driver.getTokens(code);
-    if (!tokens.access_token) {
-      console.error("Token exchange failed:", tokens);
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/settings/email?error=token_exchange_failed`,
-      );
-    }
 
-    if (!tokens.access_token || !tokens.refresh_token) {
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/settings/email?error=token_exchange_failed`,
-      );
-    }
     const userInfo = await driver.getUserInfo({
       access_token: tokens.access_token!,
       refresh_token: tokens.refresh_token!,
@@ -56,11 +45,9 @@ export async function GET(
       updatedAt: new Date(),
     });
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/connect-emails?success=true`);
+    return new NextResponse(JSON.stringify({ success: true }));
   } catch (error) {
     console.error("Callback error:", error);
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/settings/email?error=callback_failed`,
-    );
+    return new NextResponse(JSON.stringify({ error: "Callback failed" }));
   }
 }

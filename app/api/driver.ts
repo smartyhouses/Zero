@@ -54,7 +54,7 @@ const findHtmlBody = (parts: any[]): string => {
   return "";
 };
 
-const googleDriver = (config: IConfig): MailManager => {
+const googleDriver = async (config: IConfig): Promise<MailManager> => {
   const auth = new google.auth.OAuth2({
     clientId: process.env.GOOGLE_CLIENT_ID as string,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
@@ -99,27 +99,27 @@ const googleDriver = (config: IConfig): MailManager => {
     return { folder, q };
   };
   const gmail = google.gmail({ version: "v1", auth });
+  const codes = await auth.generateCodeVerifierAsync();
   return {
     getScope,
     getUserInfo: (tokens: { access_token: string; refresh_token: string }) => {
-      const auth = new google.auth.OAuth2({
-        clientId: process.env.GOOGLE_CLIENT_ID as string,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      });
       auth.setCredentials({ ...tokens, scope: getScope() });
       return google.people({ version: "v1", auth }).people.get({ resourceName: "people/me" });
     },
     getTokens: (code: string) => {
-      return auth.getToken(code);
+      return auth.getToken({
+        code,
+        codeVerifier: codes.codeVerifier,
+      });
     },
     generateConnectionAuthUrl: (userId: string) => {
       return auth.generateAuthUrl({
         redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
-        response_type: "code",
         scope: getScope(),
         access_type: "offline",
         prompt: "consent",
         state: userId,
+        code_challenge: codes.codeChallenge,
       });
     },
     count: async () => {
@@ -234,10 +234,10 @@ const SupportedProviders = {
   google: googleDriver,
 };
 
-export const createDriver = (
+export const createDriver = async (
   provider: keyof typeof SupportedProviders | string,
   config: IConfig,
-): MailManager => {
+): Promise<MailManager> => {
   const factory = SupportedProviders[provider as keyof typeof SupportedProviders];
   if (!factory) throw new Error("Provider not supported");
   switch (provider) {

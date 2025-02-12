@@ -14,7 +14,7 @@ export async function GET(
   }
 
   const { providerId } = await params;
-  const driver = createDriver(providerId, {});
+  const driver = await createDriver(providerId, {});
   const authUrl = driver.generateConnectionAuthUrl(userId);
   return NextResponse.redirect(authUrl);
 }

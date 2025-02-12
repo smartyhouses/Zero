@@ -22,7 +22,7 @@ export const GET = async (
   if (!_connection?.accessToken || !_connection.refreshToken)
     return new Response("Unauthorized, reconnect", { status: 402 });
 
-  const driver = createDriver(_connection.providerId, {
+  const driver = await createDriver(_connection.providerId, {
     // Assuming "google" is the provider ID
     auth: {
       access_token: _connection.accessToken,
