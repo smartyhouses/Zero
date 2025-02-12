@@ -172,7 +172,8 @@ const googleDriver = (config: IConfig): MailManager => {
       // Process the body content
       console.log("🔄 Driver: Processing email body...");
       const decodedBody = fromBinary(bodyData);
-      const processedHtml = createEmailHtml(decodedBody);
+      // we probably dont need this, testing
+      const processedHtml = "";
 
       console.log("✅ Driver: Email processing complete", {
         hasBody: !!bodyData,
@@ -187,7 +188,7 @@ const googleDriver = (config: IConfig): MailManager => {
         ...parsedData,
         body: bodyData,
         processedHtml,
-        blobUrl: `data:text/html;charset=utf-8,${encodeURIComponent(processedHtml)}`,
+        blobUrl: `data:text/html;charset=utf-8,${encodeURIComponent(decodedBody)}`,
       };
 
       // Log the result for debugging

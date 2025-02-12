@@ -101,7 +101,7 @@ const fetchEmailsFromCache = async (args: any[]) => {
   if (folder) searchParams.set("folder", folder.toString());
   if (labelIds) searchParams.set("labelIds", labelIds.join(","));
   const data = await threadsCache.list(searchParams.toString());
-  return { messages: data };
+  return { messages: data.reverse() };
 };
 
 const fetchEmail = async (args: any[]): Promise<ParsedMessage> => {

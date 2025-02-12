@@ -11,6 +11,8 @@ import {
   Send,
   FileIcon,
   Copy,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import sanitizeHtml from "sanitize-html";
@@ -66,25 +68,7 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-
-  useEffect(() => {
-    async function fetchEmail() {
-      if (!mail) return;
-
-      try {
-        const response = await fetch(`/api/v1/mail/${mail}`);
-        if (!response.ok) throw new Error("Failed to fetch email");
-
-        const data = await response.json();
-        setEmailData(data);
-        console.log("Email data:", data); // For debugging
-      } catch (error) {
-        console.error("Error fetching email:", error);
-      }
-    }
-
-    fetchEmail();
-  }, [mail]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (emailData) {
@@ -213,7 +197,13 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className={cn("flex h-full flex-col", isMobile ? "" : "rounded-r-lg pt-[6px]")}>
+      <div
+        className={cn(
+          "flex h-full flex-col transition-all duration-300",
+          isMobile ? "" : "rounded-r-lg pt-[6px]",
+          isFullscreen ? "fixed inset-0 z-50 bg-background" : "",
+        )}
+      >
         <div className="sticky top-0 z-20 flex items-center gap-2 border-b bg-background/95 px-4 pb-[7.5px] pt-[0.5px] backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex flex-1 items-center gap-2">
             {!isMobile && (
@@ -237,6 +227,28 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="md:h-fit md:px-2"
+                  disabled={!emailData}
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">
+                    {isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -294,8 +306,10 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
           </div>
         </div>
 
-        <div className="relative flex-1 overflow-hidden">
-          <div className="absolute inset-0 overflow-y-auto">
+        <div
+          className={cn("relative flex-1 overflow-hidden", isFullscreen && "h-[calc(100vh-4rem)]")}
+        >
+          <div className="relative inset-0 h-full overflow-y-auto pb-0">
             <div className="flex flex-col gap-4 px-4 py-4">
               <div className="flex items-start gap-3">
                 <Avatar>
@@ -319,15 +333,39 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
 
             <Separator />
 
-            <div className="px-8 py-4 pb-[200px]">
-              <div
-                className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: decodedBody }}
-              />
+            <div className="h-full w-full p-0">
+              <div className="flex h-full w-full flex-1 flex-col p-0">
+                {emailData.blobUrl ? (
+                  <iframe
+                    key={emailData.id}
+                    src={emailData.blobUrl}
+                    className={cn(
+                      "w-full flex-1 border-none transition-opacity duration-200",
+                      isLoading ? "opacity-50" : "opacity-100",
+                    )}
+                    title="Email Content"
+                    sandbox="allow-same-origin"
+                    style={{
+                      minHeight: "500px",
+                      height: "100%",
+                      overflow: "auto",
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="flex h-[500px] w-full items-center justify-center"
+                    style={{ minHeight: "500px" }}
+                  >
+                    <div className="h-32 w-32 animate-pulse rounded-full bg-secondary" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="absolute bottom-0 left-0 right-0 z-10 bg-background px-4 pb-4 pt-2">
+        {!isFullscreen && (
+          <div className="relative bottom-0 left-0 right-0 z-10 bg-background px-4 pb-4 pt-2">
             <form className="relative space-y-2.5 rounded-[calc(var(--radius)-2px)] border bg-secondary/50 p-4 shadow-sm">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
@@ -451,7 +489,7 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
               </div>
             </form>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
