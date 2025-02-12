@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ErrorContext } from "better-auth/client";
 import { Button } from "@/components/ui/button";
-import { useSession } from "@/lib/auth-client";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
@@ -30,11 +29,6 @@ const loginSchema = z.object({
 export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { data: session } = useSession();
-
-  if (session) {
-    router.push("/mail");
-  }
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -47,30 +41,23 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
     try {
-      await signIn.email(
-        {
-          email: values.email,
-          password: values.password,
-          callbackURL: "/mail",
-        },
-        {
-          onSuccess: () => {
-            toast.success("Logged in successfully!");
-            router.push("/mail");
-          },
-          onError: (error: ErrorContext) => {
-            const errorMessage = error?.error?.message || "Invalid email or password";
-            toast.error(errorMessage);
-            setIsSubmitting(false);
-          },
-          onSettled: () => {
-            setIsSubmitting(false);
-          },
-        },
-      );
+      const response = await signIn.email({
+        email: values.email,
+        password: values.password,
+        callbackURL: "/mail",
+      });
+
+      if ("error" in response) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      toast.success("Logged in successfully!");
+      router.push("/mail");
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "An unexpected error occurred");
+    } finally {
       setIsSubmitting(false);
     }
   };
