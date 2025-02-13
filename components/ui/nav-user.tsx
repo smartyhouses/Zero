@@ -28,10 +28,10 @@ import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui
 import { useConnections } from "@/hooks/use-connections";
 import { signOut, useSession } from "@/lib/auth-client";
 import { Tabs, TabsList, TabsTrigger } from "./tabs";
-import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { IConnection } from "@/types";
+import { useMemo } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import axios from "axios";
@@ -40,7 +40,7 @@ export function NavUser() {
   const { data: session, refetch } = useSession();
   const router = useRouter();
   const { setTheme, theme } = useTheme();
-  const { data: connections, isLoading, mutate } = useConnections();
+  const { data: connections, isLoading } = useConnections();
 
   const activeAccount = useMemo(() => {
     if (!session) return null;
@@ -57,7 +57,9 @@ export function NavUser() {
       })
       .then(refetch)
       .catch((err) => {
-        toast.error("Error switching connection");
+        toast.error("Error switching connection", {
+          description: err.response.data.message,
+        });
       });
   };
 

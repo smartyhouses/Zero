@@ -77,6 +77,7 @@ export function SearchBar() {
     },
   });
 
+  /* eslint-disable-next-line react-hooks/exhaustive-deps */
   useEffect(() => {
     const subscription = form.watch((data) => {
       submitSearch(data as { subject: string; from: string; to: string; q: string });

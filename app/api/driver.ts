@@ -1,10 +1,5 @@
-import {
-  ALLOWED_HTML_TAGS,
-  ALLOWED_HTML_ATTRIBUTES,
-  ALLOWED_HTML_STYLES,
-  EMAIL_HTML_TEMPLATE,
-} from "@/lib/constants";
-import sanitizeHtml from "sanitize-html";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { ParsedMessage } from "@/types";
 import { google } from "googleapis";
 import * as he from "he";

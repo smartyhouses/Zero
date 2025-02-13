@@ -21,13 +21,13 @@ export default function TermsOfService() {
         <ul className="mb-4 list-disc pl-6">
           <li>Mail0.io provides software that users can deploy on their own infrastructure</li>
           <li>Users are responsible for their own hosting, maintenance, and compliance</li>
-          <li>The software is provided "as is" under the MIT License</li>
+          <li>The software is provided &quot;as is&quot; under the MIT License</li>
         </ul>
 
         <h3 className="mb-2 text-xl font-medium">External Email Integration</h3>
         <ul className="mb-4 list-disc pl-6">
           <li>Mail0.io can integrate with third-party email providers</li>
-          <li>Users must comply with third-party providers' terms of service</li>
+          <li>Users must comply with third-party providers&apos; terms of service</li>
           <li>We are not responsible for third-party service disruptions</li>
         </ul>
       </section>

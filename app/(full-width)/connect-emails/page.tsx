@@ -11,18 +11,10 @@ import {
 import { ArrowRight, Loader2, Plus, Trash } from "lucide-react";
 import { useConnections } from "@/hooks/use-connections";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import Link from "next/link";
 
-interface GoogleConnection {
-  id: string;
-  email: string;
-  name?: string;
-  picture?: string;
-  createdAt: Date;
-}
 export default function ConnectEmails() {
   const { data: connections, mutate, isLoading: loading } = useConnections();
 

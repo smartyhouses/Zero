@@ -15,7 +15,6 @@ import {
   Minimize2,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import sanitizeHtml from "sanitize-html";
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -31,34 +30,10 @@ import { useMail } from "./use-mail";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
 
-interface MailResponse {
-  id: string;
-  title: string;
-  tags: string[];
-  sender: {
-    name: string;
-    email: string;
-  };
-  unread: boolean;
-  receivedOn: string;
-  body: string; // base64 encoded HTML
-}
-
 interface MailDisplayProps {
   mail: string | null;
   onClose?: () => void;
   isMobile?: boolean;
-}
-
-function fromBinary(str: string) {
-  return decodeURIComponent(
-    atob(str.replace(/-/g, "+").replace(/_/g, "/"))
-      .split("")
-      .map(function (c) {
-        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join(""),
-  );
 }
 
 export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {

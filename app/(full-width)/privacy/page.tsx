@@ -9,8 +9,8 @@ export default function PrivacyPolicy() {
         <h2 className="mb-4 text-2xl font-semibold">Our Commitment to Privacy</h2>
         <p className="mb-4">
           At Mail0.io, we believe that privacy is a fundamental right. Our open-source email
-          solution is built with privacy at its core, and we're committed to being transparent about
-          how we handle your data.
+          solution is built with privacy at its core, and we&apos;re committed to being transparent
+          about how we handle your data.
         </p>
       </section>
 
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-4 text-2xl font-semibold">Data We Don't Collect</h2>
+        <h2 className="mb-4 text-2xl font-semibold">Data We Don&apos;t Collect</h2>
         <ul className="mb-4 list-disc pl-6">
           <li>We do not track user behavior</li>
           <li>We do not sell or share your data with third parties</li>

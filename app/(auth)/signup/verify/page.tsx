@@ -10,7 +10,8 @@ export default function VerifyEmail() {
         <CardHeader className="py-2">
           <CardTitle className="text-center">Verify your email</CardTitle>
           <p className="text-center text-sm text-gray-500 dark:text-zinc-400">
-            We've sent a verification email to your inbox. If you don't see it, please signup again{" "}
+            We&apos;ve sent a verification email to your inbox. If you don&apos;t see it, please
+            signup again{" "}
             <Link href="/signup" className="underline">
               here
             </Link>

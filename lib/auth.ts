@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth, BetterAuthOptions } from "better-auth";
 import { connection, user as _user } from "@/db/schema";
