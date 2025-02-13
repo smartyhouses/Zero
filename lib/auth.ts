@@ -50,15 +50,17 @@ const options = {
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({ user, token }) => {
+      const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}&callbackURL=/connect-emails`;
+
       await resend.emails.send({
-        from: "Mail0 <onboarding@resend.dev>",
+        from: "Mail0 <onboarding@mail0.dev>",
         to: user.email,
-        subject: "Verify your email",
+        subject: "Verify your Mail0 account",
         html: `
-          <h2>Verify Your Email</h2>
+          <h2>Verify Your Mail0 Account</h2>
           <p>Click the link below to verify your email:</p>
-          <a href="${url}">${url}</a>
+          <a href="${verificationUrl}">${verificationUrl}</a>
         `,
       });
     },

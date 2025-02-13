@@ -144,7 +144,7 @@ export function NavUser() {
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>
-            <DropdownMenuItem onClick={() => router.push("/settings")}>
+            <DropdownMenuItem onClick={() => router.push("/connect-emails")}>
               <Cog size={16} strokeWidth={2} className="opacity-60" aria-hidden="true" />
               Settings
             </DropdownMenuItem>
