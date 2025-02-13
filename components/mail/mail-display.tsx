@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useThread } from "@/hooks/use-threads";
 import { useMail } from "./use-mail";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
@@ -62,8 +63,7 @@ function fromBinary(str: string) {
 
 export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
   const [, setMail] = useMail();
-  const [emailData, setEmailData] = useState<MailResponse | null>(null);
-  const [decodedBody, setDecodedBody] = useState<string>("");
+  const { data: emailData, isLoading } = useThread(mail ?? "");
   const [isMuted, setIsMuted] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -73,71 +73,6 @@ export function MailDisplay({ mail, onClose, isMobile }: MailDisplayProps) {
   useEffect(() => {
     if (emailData) {
       setIsMuted(emailData.unread ?? false);
-    }
-  }, [emailData]);
-
-  useEffect(() => {
-    if (emailData?.body) {
-      // Use the new fromBinary function to properly decode the body
-      const ALLOWED_TAGS = [
-        // Common email tags
-        "div",
-        "p",
-        "span",
-        "a",
-        "img",
-        "table",
-        "tr",
-        "td",
-        "th",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "ul",
-        "ol",
-        "li",
-        "br",
-        "b",
-        "strong",
-        "i",
-        "em",
-        "style",
-      ];
-
-      try {
-        const decoded = fromBinary(emailData.body);
-        const sanitized = sanitizeHtml(decoded, {
-          allowedTags: ALLOWED_TAGS,
-          allowedAttributes: {
-            "*": ["class", "id", "style"], // Allow style on everything
-            img: ["src", "alt", "title", "width", "height"],
-            a: ["href", "target", "rel"],
-          },
-          allowedStyles: {
-            "*": {
-              // Allow all styles on all elements
-              "*": [/.*/], // Regex that matches everything
-            },
-          },
-          allowedSchemes: ["http", "https", "mailto", "tel"], // Only allow safe URL schemes
-          transformTags: {
-            a: (tagName, attribs) => ({
-              tagName,
-              attribs: {
-                ...attribs,
-                target: "_blank",
-                rel: "noopener noreferrer",
-              },
-            }),
-          },
-        });
-        setDecodedBody(sanitized);
-      } catch (error) {
-        console.error("Error decoding email body:", error);
-      }
     }
   }, [emailData]);
 

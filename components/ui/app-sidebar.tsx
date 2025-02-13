@@ -91,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
           {
             title: "Shopping",
-            url: "/mail/inbox?category=shipping",
+            url: "/mail/inbox?category=shopping",
             icon: ShoppingCart,
             badge: 8,
           },
