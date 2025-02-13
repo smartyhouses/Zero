@@ -31,21 +31,35 @@ import { Tabs, TabsList, TabsTrigger } from "./tabs";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { IConnection } from "@/types";
 import Image from "next/image";
 import { toast } from "sonner";
-
-const ACTIVE_GMAIL_KEY = "activeGmailAccount";
+import axios from "axios";
 
 export function NavUser() {
-  const { data: session } = useSession();
+  const { data: session, refetch } = useSession();
   const router = useRouter();
   const { setTheme, theme } = useTheme();
-  const { data: connections, isLoading } = useConnections();
+  const { data: connections, isLoading, mutate } = useConnections();
 
   const activeAccount = useMemo(() => {
     if (!session) return null;
-    // return connections?.find(connection => connection.id === session?.connectionId)
+    return connections?.find((connection) => connection.id === session?.connectionId);
   }, [session, connections]);
+
+  const handleAccountSwitch = (connection: IConnection) => () => {
+    return axios
+      .put(`/api/v1/mail/connections/${connection.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then(refetch)
+      .catch((err) => {
+        toast.error("Error switching connection");
+      });
+  };
 
   return (
     <DropdownMenu>
@@ -62,7 +76,7 @@ export function NavUser() {
                 </>
               ) : (
                 <>
-                  {/* <Image
+                  <Image
                     src={activeAccount?.picture || session?.user.image || "/logo.png"}
                     alt={activeAccount?.name || session?.user.name || "User"}
                     className="shrink-0 rounded-md"
@@ -74,7 +88,7 @@ export function NavUser() {
                       {(activeAccount?.email || session?.user.email)?.slice(0, 16)}...
                       <ChevronDown className="size-3 text-muted-foreground" />
                     </span>
-                  </div> */}
+                  </div>
                 </>
               )}
             </SidebarMenuButton>
@@ -102,7 +116,7 @@ export function NavUser() {
                   {connections?.map((connection) => (
                     <DropdownMenuItem
                       key={connection.id}
-                      // onClick={() => handleAccountSwitch(connection)}
+                      onClick={handleAccountSwitch(connection)}
                       className="flex items-center gap-2"
                     >
                       <Image

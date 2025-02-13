@@ -1,17 +1,10 @@
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth, BetterAuthOptions } from "better-auth";
+import { connection, user as _user } from "@/db/schema";
 import { customSession } from "better-auth/plugins";
-import { connection } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 import { db } from "@/db";
-
-type User = {
-  id: string;
-  email: string;
-  name?: string;
-  image?: string;
-};
 
 // If there is no resend key, it might be a local dev environment
 // In that case, we don't want to send emails and just log them
@@ -72,13 +65,27 @@ const options = {
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      const defaultConnection = await db
-        .select()
-        .from(connection)
-        .where(eq(connection.userId, user.id))
+      const [foundUser] = await db
+        .select({
+          activeConnectionId: _user.defaultConnectionId,
+        })
+        .from(_user)
+        .where(eq(_user.id, user.id))
         .limit(1);
+      if (!foundUser.activeConnectionId) {
+        const [defaultConnection] = await db
+          .select()
+          .from(connection)
+          .where(eq(connection.userId, user.id))
+          .limit(1);
+        return {
+          connectionId: defaultConnection ? defaultConnection.id : null,
+          user,
+          session,
+        };
+      }
       return {
-        connectionId: defaultConnection.length ? defaultConnection.pop()?.id : null,
+        connectionId: foundUser.activeConnectionId,
         user,
         session,
       };

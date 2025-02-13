@@ -10,6 +10,7 @@ export const user = createTable("user", {
   image: text("image"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
+  defaultConnectionId: text("default_connection_id"),
 });
 
 export const session = createTable("session", {

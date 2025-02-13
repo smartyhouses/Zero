@@ -4,7 +4,7 @@ import useSWR from "swr";
 
 export const useConnections = () => {
   // override the fetcher
-  const { data, error, isLoading } = useSWR<{ data: { connections: IConnection[] } }>(
+  const { data, error, isLoading, mutate } = useSWR<{ data: { connections: IConnection[] } }>(
     "/api/v1/mail/connections",
     axios,
   );
@@ -13,5 +13,6 @@ export const useConnections = () => {
     data: data?.data.connections,
     error,
     isLoading,
+    mutate,
   };
 };

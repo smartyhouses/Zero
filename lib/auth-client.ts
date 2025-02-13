@@ -8,4 +8,5 @@ export const authClient = createAuthClient({
   baseURL: BASE_URL, // the base url of your auth server
   plugins: [customSessionClient<typeof auth>()],
 });
-export const { signIn, signUp, signOut, useSession, getSession, $fetch } = createAuthClient();
+
+export const { signIn, signUp, signOut, useSession, getSession, $fetch } = authClient;

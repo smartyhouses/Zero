@@ -1,8 +1,8 @@
 import { createDriver } from "../../driver";
 import { NextRequest } from "next/server";
 import { connection } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { eq } from "drizzle-orm";
 import { db } from "@/db";
 
 export const GET = async ({ headers, nextUrl }: NextRequest) => {
@@ -10,17 +10,18 @@ export const GET = async ({ headers, nextUrl }: NextRequest) => {
   const session = await auth.api.getSession({ headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
 
+  if (!session.connectionId) return new Response("Unauthorized", { status: 401 });
+
   // Updated to use googleConnection table
   const [_connection] = await db
     .select()
     .from(connection)
-    .where(eq(connection.userId, session.user.id));
+    .where(and(eq(connection.userId, session.user.id), eq(connection.id, session.connectionId)));
 
   if (!_connection?.accessToken || !_connection.refreshToken)
     return new Response("Unauthorized, reconnect", { status: 402 });
 
-  const driver = await createDriver("google", {
-    // Assuming "google" is the provider ID
+  const driver = await createDriver(_connection.providerId, {
     auth: {
       access_token: _connection.accessToken,
       refresh_token: _connection.refreshToken,
