@@ -27,7 +27,10 @@ export async function DELETE(
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { connectionId: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ connectionId: string }> },
+) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
     const userId = session?.user?.id;
@@ -36,10 +39,12 @@ export async function PUT(request: NextRequest, { params }: { params: { connecti
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const { connectionId } = await params;
+
     const [foundConnection] = await db
       .select()
       .from(connection)
-      .where(and(eq(connection.id, params.connectionId), eq(connection.userId, userId)))
+      .where(and(eq(connection.id, connectionId), eq(connection.userId, userId)))
       .limit(1);
 
     if (!foundConnection) {
@@ -49,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: { connecti
     await db
       .update(user)
       .set({
-        defaultConnectionId: params.connectionId,
+        defaultConnectionId: connectionId,
       })
       .where(eq(user.id, userId));
 
