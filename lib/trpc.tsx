@@ -10,29 +10,27 @@ import SuperJSON from "superjson";
 import { toast } from "sonner";
 import { env } from "./env";
 
-const createQueryClient = () =>
-  new QueryClient({
-    queryCache: new QueryCache({
-      onError: (err, { meta }) => {
-        if (meta && meta.noGlobalError === true) return;
-        toast.error(err.message);
-      },
-    }),
-    defaultOptions: {
-      queries: {
-        retry: false,
-        refetchOnWindowFocus: false,
-      },
-      mutations: {
-        onError: (err) => toast.error(err.message),
-      },
+export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (err, { meta }) => {
+      if (meta && meta.noGlobalError === true) return;
+      toast.error(err.message);
     },
-  });
+  }),
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      onError: (err) => toast.error(err.message),
+    },
+  },
+});
 
 export const trpc = createTRPCReact<AppRouter>();
 
 export function TrpcProvider({ children }: PropsWithChildren) {
-  const [queryClient] = useState(() => createQueryClient());
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
