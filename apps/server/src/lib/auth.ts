@@ -28,10 +28,16 @@ const connectionHandlerHook = async (account: Account, c: HonoContext) => {
   const driver = createDriver(
     account.providerId,
     {
-      auth: { accessToken: account.accessToken, refreshToken: account.refreshToken, email: '' },
+      auth: {
+        accessToken: account.accessToken,
+        refreshToken: account.refreshToken,
+        email: '',
+        // accountId: account.id,
+        userId: account.userId,
+      },
       c,
     },
-    c.env,
+    c,
   );
   const userInfo = await driver.getUserInfo().catch(() => {
     throw new APIError('UNAUTHORIZED', { message: 'Failed to get user info' });
