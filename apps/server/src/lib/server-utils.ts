@@ -28,13 +28,20 @@ export const connectionToDriver = (
   activeConnection: typeof connection.$inferSelect,
   c: HonoContext,
 ) => {
-  const driver = createDriver(activeConnection.providerId, {
-    auth: {
-      accessToken: activeConnection.accessToken,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      refreshToken: activeConnection.refreshToken!,
-      email: activeConnection.email,
+  const driver = createDriver(
+    activeConnection.providerId,
+    {
+      auth: {
+        accessToken: activeConnection.accessToken,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        refreshToken: activeConnection.refreshToken!,
+        email: activeConnection.email,
+        // accountId: activeConnection.id,
+        userId: activeConnection.userId,
+      },
+      c,
     },
-  });
+    c,
+  );
   return driver;
 };
