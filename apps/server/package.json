@@ -26,7 +26,7 @@
     "@upstash/redis": "^1.34.9",
     "@zero/db": "workspace:*",
     "ai": "^4.3.13",
-    "better-auth": "1.2.8-beta.7",
+    "better-auth": "https://pkg.pr.new/better-auth/better-auth@2583",
     "date-fns": "^4.1.0",
     "dedent": "^1.6.0",
     "drizzle-orm": "^0.43.1",
