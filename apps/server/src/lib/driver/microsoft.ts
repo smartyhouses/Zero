@@ -228,6 +228,8 @@ export class OutlookMailManager implements MailManager {
       async () => {
         const res = await request.get();
 
+        // console.log(JSON.stringify(res, null, 4));
+
         const messages: Message[] = res.value;
         const nextPageLink: string | undefined = res['@odata.nextLink'];
 
