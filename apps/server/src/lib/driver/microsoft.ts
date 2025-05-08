@@ -209,7 +209,7 @@ export class OutlookMailManager implements MailManager {
     // }
 
     request = request.select(
-      'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,conversationId,internetMessageId,inferenceClassification,categories,parentFolderId',
+      'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,parentFolderId',
     );
 
     if (maxResults > 0) {
@@ -308,7 +308,7 @@ export class OutlookMailManager implements MailManager {
         const message: Message = await this.graphClient
           .api(`/me/messages/${id}`)
           .select(
-            'id,subject,body,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,conversationId,internetMessageId,inferenceClassification,categories,attachments',
+            'id,subject,body,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,attachments',
           )
           .get();
 
@@ -528,7 +528,7 @@ export class OutlookMailManager implements MailManager {
         }
 
         request = request.select(
-          'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,conversationId,internetMessageId',
+          'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId',
         );
         request = request.orderby('receivedDateTime desc');
         request = request.top(maxResults);
