@@ -141,7 +141,7 @@ export const createAuth = (c: HonoContext) =>
       enabled: false,
       requireEmailVerification: true,
       sendResetPassword: async ({ user, url }) => {
-        await resend(c.env).emails.send({
+        await resend().emails.send({
           from: '0.email <onboarding@0.email>',
           to: user.email,
           subject: 'Reset your password',
@@ -160,7 +160,7 @@ export const createAuth = (c: HonoContext) =>
       sendVerificationEmail: async ({ user, token }) => {
         const verificationUrl = `${c.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&callbackURL=/settings/connections`;
 
-        await resend(c.env).emails.send({
+        await resend().emails.send({
           from: '0.email <onboarding@0.email>',
           to: user.email,
           subject: 'Verify your 0.email account',
