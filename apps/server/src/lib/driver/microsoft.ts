@@ -204,9 +204,9 @@ export class OutlookMailManager implements MailManager {
 
     let request = this.graphClient.api(`/me/mailFolders/${folderId}/messages`).top(maxResults);
 
-    if (q) {
-      request = request.search(`"${q}"`);
-    }
+    // if (q) {
+    //   request = request.search(`"${q}"`);
+    // }
 
     request = request.select(
       'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,conversationId,internetMessageId,inferenceClassification,categories,parentFolderId',
@@ -221,7 +221,7 @@ export class OutlookMailManager implements MailManager {
       );
     }
 
-    request = request.orderby('receivedDateTime desc');
+    // request = request.orderby('receivedDateTime desc');
 
     return this.withErrorHandler(
       'list',
@@ -308,7 +308,7 @@ export class OutlookMailManager implements MailManager {
         const message: Message = await this.graphClient
           .api(`/me/messages/${id}`)
           .select(
-            'id,subject,body,headers,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,conversationId,internetMessageId,inferenceClassification,categories,attachments',
+            'id,subject,body,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,conversationId,internetMessageId,inferenceClassification,categories,attachments',
           )
           .get();
 
