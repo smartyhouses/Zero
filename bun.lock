@@ -90,7 +90,7 @@
         "@zero/server": "workspace:*",
         "ai": "^4.3.9",
         "autumn-js": "0.0.22",
-        "better-auth": "v1.2.8-beta.6",
+        "better-auth": "1.2.8-beta.7",
         "canvas-confetti": "1.9.3",
         "cheerio": "1.0.0",
         "class-variance-authority": "0.7.1",
@@ -203,6 +203,7 @@
         "@upstash/redis": "^1.34.9",
         "@zero/db": "workspace:*",
         "ai": "^4.3.13",
+        "better-auth": "1.2.8-beta.7",
         "date-fns": "^4.1.0",
         "dedent": "^1.6.0",
         "drizzle-orm": "^0.43.1",
@@ -210,7 +211,6 @@
         "googleapis": "^148.0.0",
         "he": "^1.2.0",
         "hono": "^4.7.8",
-        "better-auth": "https://pkg.pr.new/better-auth/better-auth@2583",
         "jsonrepair": "^3.12.0",
         "mimetext": "^3.0.27",
         "react": "^19.1.0",
@@ -1127,7 +1127,7 @@
 
     "base64-js": ["base64-js@1.5.1", "", {}, "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA=="],
 
-    "better-auth": ["better-auth@1.2.8-beta.6", "", { "dependencies": { "@better-auth/utils": "0.2.5", "@better-fetch/fetch": "^1.1.18", "@noble/ciphers": "^0.6.0", "@noble/hashes": "^1.6.1", "@simplewebauthn/browser": "^13.0.0", "@simplewebauthn/server": "^13.0.0", "better-call": "^1.0.8", "defu": "^6.1.4", "jose": "^5.9.6", "kysely": "^0.28.1", "nanostores": "^0.11.3", "zod": "^3.24.1" } }, "sha512-jGs569MELjK8nBpjiSGANOW4X7oBSEM033tpssz3axTWBPMmyIZ9xYt/yBPAjOxE7hvwtqGS8B///u5fg1sxNw=="],
+    "better-auth": ["better-auth@1.2.8-beta.7", "", { "dependencies": { "@better-auth/utils": "0.2.5", "@better-fetch/fetch": "^1.1.18", "@noble/ciphers": "^0.6.0", "@noble/hashes": "^1.6.1", "@simplewebauthn/browser": "^13.0.0", "@simplewebauthn/server": "^13.0.0", "better-call": "^1.0.8", "defu": "^6.1.4", "jose": "^5.9.6", "kysely": "^0.28.1", "nanostores": "^0.11.3", "zod": "^3.24.1" } }, "sha512-gVApvvhnPVqMCYYLMhxUfbTi5fJYfp9rcsoJSjjTOMV+CIc7KVlYN6Qo8E7ju1JeRU5ae1Wl1NdXrolRJHjmaQ=="],
 
     "better-call": ["better-call@1.0.9", "", { "dependencies": { "@better-fetch/fetch": "^1.1.4", "rou3": "^0.5.1", "set-cookie-parser": "^2.7.1", "uncrypto": "^0.1.3" } }, "sha512-Qfm0gjk0XQz0oI7qvTK1hbqTsBY4xV2hsHAxF8LZfUYl3RaECCIifXuVqtPpZJWvlCCMlQSvkvhhyuApGUba6g=="],
 
@@ -2899,8 +2899,6 @@
 
     "@zero/server/@upstash/redis": ["@upstash/redis@1.34.9", "", { "dependencies": { "crypto-js": "^4.2.0" } }, "sha512-7qzzF2FQP5VxR2YUNjemWs+hl/8VzJJ6fOkT7O7kt9Ct8olEVzb1g6/ik6B8Pb8W7ZmYv81SdlVV9F6O8bh/gw=="],
 
-    "@zero/server/better-auth": ["better-auth@https://pkg.pr.new/better-auth/better-auth@2583", { "dependencies": { "@better-auth/utils": "0.2.5", "@better-fetch/fetch": "^1.1.18", "@noble/ciphers": "^0.6.0", "@noble/hashes": "^1.6.1", "@simplewebauthn/browser": "^13.0.0", "@simplewebauthn/server": "^13.0.0", "better-call": "^1.0.8", "defu": "^6.1.4", "jose": "^5.9.6", "kysely": "^0.28.1", "nanostores": "^0.11.3", "zod": "^3.24.1" } }],
-
     "@zero/server/googleapis": ["googleapis@148.0.0", "", { "dependencies": { "google-auth-library": "^9.0.0", "googleapis-common": "^7.0.0" } }, "sha512-8PDG5VItm6E1TdZWDqtRrUJSlBcNwz0/MwCa6AL81y/RxPGXJRUwKqGZfCoVX1ZBbfr3I4NkDxBmeTyOAZSWqw=="],
 
     "@zero/server/react": ["react@19.1.0", "", {}, "sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg=="],
@@ -3264,8 +3262,6 @@
     "@zero/server/@react-email/components/@react-email/tailwind": ["@react-email/tailwind@1.0.5", "", { "peerDependencies": { "react": "^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-BH00cZSeFfP9HiDASl+sPHi7Hh77W5nzDgdnxtsVr/m3uQD9g180UwxcE3PhOfx0vRdLzQUU8PtmvvDfbztKQg=="],
 
     "@zero/server/@react-email/components/@react-email/text": ["@react-email/text@0.1.3", "", { "peerDependencies": { "react": "^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-H22KR54MXUg29a+1/lTfg9oCQA65V8+TL4v19OzV7RsOxnEnzGOc287XKh8vc+v7ENewrMV97BzUPOnKz3bqkA=="],
-
-    "@zero/server/better-auth/kysely": ["kysely@0.28.2", "", {}, "sha512-4YAVLoF0Sf0UTqlhgQMFU9iQECdah7n+13ANkiuVfRvlK+uI0Etbgd7bVP36dKlG+NXWbhGua8vnGt+sdhvT7A=="],
 
     "@zero/server/resend/@react-email/render": ["@react-email/render@1.0.6", "", { "dependencies": { "html-to-text": "9.0.5", "prettier": "3.5.3", "react-promise-suspense": "0.3.4" }, "peerDependencies": { "react": "^18.0 || ^19.0 || ^19.0.0-rc", "react-dom": "^18.0 || ^19.0 || ^19.0.0-rc" } }, "sha512-zNueW5Wn/4jNC1c5LFgXzbUdv5Lhms+FWjOvWAhal7gx5YVf0q6dPJ0dnR70+ifo59gcMLwCZEaTS9EEuUhKvQ=="],
 
