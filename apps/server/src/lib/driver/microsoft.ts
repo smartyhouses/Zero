@@ -501,7 +501,7 @@ export class OutlookMailManager implements MailManager {
       async () => {
         const draftMessage: Message = await this.graphClient
           .api(`/me/messages/${draftId}`) // Drafts are messages in the drafts folder
-          .select('id,subject,body,headers,from,toRecipients,ccRecipients,bccRecipients')
+          .select('id,subject,body,from,toRecipients,ccRecipients,bccRecipients')
           .get();
 
         if (!draftMessage) {
@@ -525,14 +525,14 @@ export class OutlookMailManager implements MailManager {
       async () => {
         let request = this.graphClient.api('/me/mailfolders/drafts/messages');
 
-        if (q) {
-          request = request.search(`"${q}"`);
-        }
+        // if (q) {
+        //   request = request.search(`"${q}"`);
+        // }
 
         request = request.select(
           'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId',
         );
-        request = request.orderby('receivedDateTime desc');
+        // request = request.orderby('receivedDateTime desc');
         request = request.top(maxResults);
 
         if (pageToken) {
