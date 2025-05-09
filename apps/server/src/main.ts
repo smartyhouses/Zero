@@ -1,14 +1,23 @@
 import { mailtoHandler } from './routes/mailto-handler';
+import type { HonoContext, HonoVariables } from './ctx';
 import { trpcServer } from '@hono/trpc-server';
 import { chatHandler } from './routes/chat';
-import type { HonoVariables } from './ctx';
 import { env } from 'cloudflare:workers';
 import { createAuth } from './lib/auth';
 import { createDb } from '@zero/db';
 import { appRouter } from './trpc';
+import { cors } from 'hono/cors';
 import { Hono } from 'hono';
 
 const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
+  .use(
+    '*',
+    cors({
+      origin: (_, c: HonoContext) => c.env.NEXT_PUBLIC_APP_URL,
+      credentials: true,
+      allowHeaders: ['Content-Type', 'Authorization'],
+    }),
+  )
   .use('*', async (c, next) => {
     const db = createDb(env.HYPERDRIVE.connectionString);
     c.set('db', db);
@@ -18,6 +27,8 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
     c.set('session', session);
     await next();
   })
+  .post('/chat', async (c) => chatHandler(c))
+  .get('/mailto-handler', async (c) => mailtoHandler(c))
   .on(['GET', 'POST'], '/auth/*', (c) => c.var.auth.handler(c.req.raw))
   .use(
     trpcServer({
@@ -30,8 +41,6 @@ const api = new Hono<{ Variables: HonoVariables; Bindings: Env }>()
       },
     }),
   )
-  .post('/chat', async (c) => chatHandler(c))
-  .get('/mailto-handler', async (c) => mailtoHandler(c))
   .onError(async (err, c) => {
     if (err instanceof Response) return err;
     console.error('Error in Hono handler:', err);

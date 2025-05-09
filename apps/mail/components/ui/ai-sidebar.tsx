@@ -9,16 +9,18 @@ import {
   DialogTrigger,
 } from './dialog';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 import { AI_SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '@/lib/constants';
-import { ResizablePanelGroup, ResizablePanel } from '@/components/ui/resizable';
 import { StyledEmailAssistantSystemPrompt, AiChatPrompt } from '@/lib/prompts';
 import { useEditor } from '@/components/providers/editor-provider';
 import { AIChat } from '@/components/create/ai-chat';
 import { X, Paper } from '@/components/icons/icons';
 import { GitBranchPlus, Plus } from 'lucide-react';
+import { useBilling } from '@/hooks/use-billing';
 import { Button } from '@/components/ui/button';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { Gauge } from '@/components/ui/gauge';
 import { usePathname } from 'next/navigation';
 import { getCookie } from '@/lib/utils';
 import { Textarea } from './textarea';
@@ -75,6 +77,21 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
   const { open, setOpen } = useAISidebar();
   const [resetKey, setResetKey] = useState(0);
   const pathname = usePathname();
+  const { chatMessages, attach } = useBilling();
+
+  const handleUpgrade = async () => {
+    // if (attach) {
+    //   return attach({
+    //     productId: 'pro-example',
+    //   })
+    //     .catch((error: Error) => {
+    //       console.error('Failed to upgrade:', error);
+    //     })
+    //     .then(() => {
+    //       console.log('Upgraded successfully');
+    //     });
+    // }
+  };
 
   useHotkeys('Meta+0', () => {
     setOpen(!open);
@@ -101,14 +118,14 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
         className={cn('bg-lightBackground dark:bg-darkBackground p-0')}
       >
         <ResizablePanel>{children}</ResizablePanel>
-
+        <ResizableHandle className="opacity-0" />
         {open && (
           <>
             <ResizablePanel
               defaultSize={20}
               minSize={20}
               maxSize={35}
-              className="bg-panelLight dark:bg-panelDark ml- mr-1.5 mt-1 h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
+              className="bg-panelLight dark:bg-panelDark mr-1.5 mt-1 h-[calc(98vh+12px)] border-[#E7E7E7] shadow-sm md:rounded-2xl md:border md:shadow-sm dark:border-[#252525]"
             >
               <div className={cn('h-[calc(98vh+15px)]', 'flex flex-col', '', className)}>
                 <div className="flex h-full flex-col">
@@ -129,7 +146,30 @@ export function AISidebar({ children, className }: AISidebarProps & { children: 
                       </Tooltip>
                     </TooltipProvider>
 
-                    <div className="flex">
+                    <div className="flex items-center gap-2">
+                      <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild className="md:h-fit md:px-2">
+                            <div>
+                              <Gauge
+                                value={50 - chatMessages.remaining!}
+                                size="small"
+                                showValue={true}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              You've used {50 - chatMessages.remaining!} out of 50 chat messages.
+                            </p>
+                            <p className="mb-2">Upgrade for unlimited messages!</p>
+                            <Button onClick={handleUpgrade} className="h-8 w-full">
+                              Upgrade
+                            </Button>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+
                       <TooltipProvider delayDuration={0}>
                         <Dialog>
                           <Tooltip>

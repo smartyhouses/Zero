@@ -84,7 +84,13 @@ export const createAuth = (c: HonoContext) =>
       ipAddress: {
         disableIpTracking: true,
       },
+      crossSubDomainCookies: {
+        enabled: true,
+        domain: c.env.COOKIE_DOMAIN,
+      },
     },
+    baseURL: c.env.NEXT_PUBLIC_BACKEND_URL,
+    trustedOrigins: [c.env.NEXT_PUBLIC_APP_URL, c.env.NEXT_PUBLIC_BACKEND_URL],
     user: {
       deleteUser: {
         enabled: true,

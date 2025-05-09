@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: '0.email' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'assets.0.email' },
     ],
   },
   typescript: {
@@ -48,8 +49,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL}/api/:path*`,
+        source: '/api/mailto-handler',
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mailto-handler`,
       },
     ];
   },

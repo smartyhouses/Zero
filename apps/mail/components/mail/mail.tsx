@@ -27,11 +27,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ThreadDemo, ThreadDisplay } from '@/components/mail/thread-display';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MailList, MailListDemo } from '@/components/mail/mail-list';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpcClient, useTRPC } from '@/providers/query-provider';
 import { backgroundQueueAtom } from '@/store/backgroundQueue';
 import { handleUnsubscribe } from '@/lib/email-utils.client';
@@ -43,7 +44,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMail } from '@/components/mail/use-mail';
 import { SidebarToggle } from '../ui/sidebar-toggle';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMutation } from '@tanstack/react-query';
 import { useBrainState } from '@/hooks/use-summary';
 import { clearBulkSelectionAtom } from './use-mail';
 import { Command, RefreshCcw } from 'lucide-react';
@@ -127,10 +127,7 @@ export function MailLayout() {
         // 2. Create a draft with these values
         // 3. Redirect to the compose page with just the draft ID
         // This ensures we don't keep the email content in the URL
-        navigator.registerProtocolHandler(
-          'mailto',
-          `${window.location.origin}/api/mailto-handler?mailto=%s`,
-        );
+        navigator.registerProtocolHandler('mailto', `/api/mailto-handler?mailto=%s`);
       } catch (error) {
         console.error('Failed to register protocol handler:', error);
       }
@@ -145,15 +142,15 @@ export function MailLayout() {
         <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="mail-panel-layout"
-          className="rounded-inherit gap-1 overflow-hidden"
+          className="rounded-inherit overflow-hidden"
         >
-          <div
-            className={cn(
-              'w-full border-none !bg-transparent lg:w-fit',
-              threadId ? 'md:hidden lg:block' : '',
-            )}
+          <ResizablePanel
+            defaultSize={40}
+            minSize={40}
+            maxSize={50}
+            className={`bg-panelLight dark:bg-panelDark w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
           >
-            <div className="bg-panelLight dark:bg-panelDark h-screen flex-1 flex-col overflow-y-auto overflow-x-hidden border-[#E7E7E7] shadow-inner md:flex md:h-[calc(100dvh-0.5rem)] md:rounded-2xl md:border md:shadow-sm lg:w-screen lg:max-w-[415px] xl:max-w-[500px] dark:border-[#252525]">
+            <div className="w-full md:h-[calc(100dvh-0.5rem)]">
               <div
                 className={cn(
                   'sticky top-0 z-[15] flex items-center justify-between gap-1.5 border-b border-[#E7E7E7] p-2 px-[20px] transition-colors md:min-h-14 dark:border-[#252525]',
@@ -196,17 +193,15 @@ export function MailLayout() {
                         Auto Labeling
                       </Button>
                     ) : null}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <RefreshCcw
-                          className="text-muted-foreground h-4 w-4 cursor-pointer"
-                          onClick={() => {
-                            refetchThreads();
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>Refresh</TooltipContent>
-                    </Tooltip>
+                    <Button
+                      onClick={() => {
+                        refetchThreads();
+                      }}
+                      variant="ghost"
+                      className="md:h-fit md:px-2"
+                    >
+                      <RefreshCcw className="text-muted-foreground h-4 w-4 cursor-pointer" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -229,11 +224,11 @@ export function MailLayout() {
                 <MailList isCompact={true} />
               </div>
             </div>
-          </div>
-
+          </ResizablePanel>
+          <ResizableHandle className="mr-0.5 opacity-0" />
           {isDesktop && (
             <ResizablePanel
-              className={`bg-panelLight dark:bg-panelDark ${threadId ? 'mr-1' : 'lg:mr-1'} w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
+              className={`bg-panelLight dark:bg-panelDark mr-0.5 w-fit rounded-2xl border border-[#E7E7E7] shadow-sm lg:flex lg:shadow-sm dark:border-[#252525]`}
               defaultSize={30}
               minSize={30}
             >
@@ -287,6 +282,7 @@ function BulkSelectActions() {
   const { mutateAsync: bulkStar } = useMutation(trpc.mail.bulkStar.mutationOptions());
   const [, setBackgroundQueue] = useAtom(backgroundQueueAtom);
   const { mutateAsync: bulkDeleteThread } = useMutation(trpc.mail.bulkDelete.mutationOptions());
+  const queryClient = useQueryClient();
 
   const handleMassUnsubscribe = async () => {
     setIsLoading(true);
@@ -323,6 +319,11 @@ function BulkSelectActions() {
     if (threadId && mail.bulkSelected.includes(threadId)) setThreadId(null);
     refetchThreads();
     refetchStats();
+    await Promise.all(
+      mail.bulkSelected.map((threadId) =>
+        queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey({ id: threadId }) }),
+      ),
+    );
     setMail({ ...mail, bulkSelected: [] });
   }, [mail, setMail, refetchThreads, refetchStats, threadId, setThreadId]);
 

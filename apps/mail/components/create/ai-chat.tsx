@@ -16,6 +16,7 @@ import { useStats } from '@/hooks/use-stats';
 import { useParams } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { useChat } from '@ai-sdk/react';
+import { Button } from '../ui/button';
 import { format } from 'date-fns-tz';
 import { useQueryState } from 'nuqs';
 import { Input } from '../ui/input';
@@ -138,7 +139,8 @@ export function AIChat() {
   const [searchValue] = useSearchValue();
 
   const { messages, input, setInput, error, handleSubmit, status, stop } = useChat({
-    api: '/api/chat',
+    api: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/chat`,
+    fetch: (url, options) => fetch(url, { ...options, method: 'POST', credentials: 'include' }),
     maxSteps: 5,
     body: {
       threadId: threadId ?? undefined,
@@ -152,10 +154,10 @@ export function AIChat() {
   const refetchAll = useCallback(() => {
     refetchLabels();
     refetchStats();
-    refetchThread();
+    if (threadId) refetchThread();
     queryClient.invalidateQueries({ queryKey: trpc.mail.get.queryKey() });
     refetch();
-  }, [refetchLabels, refetchStats, refetchThread, queryClient, trpc.mail.get.queryKey]);
+  }, [threadId, queryClient, trpc.mail.get.queryKey]);
 
   useEffect(() => {
     if (prevStatusRef.current === 'streaming' && status === 'ready') {
@@ -174,13 +176,32 @@ export function AIChat() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  const handleUpgrade = async () => {
+    // if (attach) {
+    //   return attach({
+    //     productId: 'pro-example',
+    //   })
+    //     .catch((error: Error) => {
+    //       console.error('Failed to upgrade:', error);
+    //     })
+    //     .then(() => {
+    //       console.log('Upgraded successfully');
+    //     });
+    // }
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         <div className="min-h-full space-y-4 px-4 py-4">
           {chatMessages && !chatMessages.enabled ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p>No more</p>
+              <TextShimmer className="text-center text-xl font-medium">
+                Upgrade to Zero Pro for unlimited AI chats
+              </TextShimmer>
+              <Button onClick={handleUpgrade} className="mt-2 h-8 w-52">
+                Upgrade
+              </Button>
             </div>
           ) : !messages.length ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -273,7 +294,7 @@ export function AIChat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask AI to do anything..."
-                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-16 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
+                    className="placeholder:text-muted-foreground h-8 w-full resize-none rounded-lg bg-white px-3 py-2 pr-10 text-sm focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#202020]"
                   />
                   {status === 'ready' ? (
                     <button
