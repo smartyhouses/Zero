@@ -17,6 +17,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import type { MailManager, ManagerConfig } from './types';
 import type { CreateDraftData } from '../schemas';
 import type { HonoContext } from '../../ctx';
+import { createMimeMessage } from 'mimetext';
 import * as he from 'he';
 
 export class OutlookMailManager implements MailManager {
@@ -587,16 +588,82 @@ export class OutlookMailManager implements MailManager {
     return this.withErrorHandler(
       'createDraft',
       async () => {
-        const messagePayload = await this.parseOutgoingOutlook(data);
+        const message = await sanitizeTipTapHtml(data.message);
+
+        const toRecipients = Array.isArray(data.to) ? data.to : data.to.split(', ');
+
+        const outlookMessage: Message = {
+          subject: data.subject,
+          body: {
+            contentType: 'html',
+            content: message || '',
+          },
+          toRecipients: toRecipients.map((recipient) => ({
+            emailAddress: {
+              address: typeof recipient === 'string' ? recipient : recipient.email,
+              name: typeof recipient === 'string' ? undefined : recipient.name || undefined,
+            },
+          })),
+        };
+
+        if (data.cc) {
+          const ccRecipients = Array.isArray(data.cc) ? data.cc : data.cc.split(', ');
+          outlookMessage.ccRecipients = ccRecipients.map((recipient) => ({
+            emailAddress: {
+              address: typeof recipient === 'string' ? recipient : recipient.email,
+              name: typeof recipient === 'string' ? undefined : recipient.name || undefined,
+            },
+          }));
+        }
+
+        if (data.bcc) {
+          const bccRecipients = Array.isArray(data.bcc) ? data.bcc : data.bcc.split(', ');
+          outlookMessage.bccRecipients = bccRecipients.map((recipient) => ({
+            emailAddress: {
+              address: typeof recipient === 'string' ? recipient : recipient.email,
+              name: typeof recipient === 'string' ? undefined : recipient.name || undefined,
+            },
+          }));
+        }
+
+        if (data.attachments && data.attachments.length > 0) {
+          outlookMessage.attachments = await Promise.all(
+            data.attachments.map(async (file) => {
+              const arrayBuffer = await file.arrayBuffer();
+              const buffer = Buffer.from(arrayBuffer);
+              const base64Content = buffer.toString('base64');
+
+              return {
+                '@odata.type': '#microsoft.graph.fileAttachment',
+                name: file.name,
+                contentType: file.type || 'application/octet-stream',
+                contentBytes: base64Content,
+              };
+            }),
+          );
+        }
 
         let res;
 
         if (data.id) {
-          // Update an existing draft: PATCH /me/messages/{id}
-          res = await this.graphClient.api(`/me/messages/${data.id}`).patch(messagePayload);
+          try {
+            res = await this.graphClient
+              .api(`/me/mailfolders/drafts/messages/${data.id}`)
+              .patch(outlookMessage);
+          } catch (error) {
+            console.warn(`Failed to update draft ${data.id}, creating a new one`, error);
+            try {
+              await this.graphClient.api(`/me/mailfolders/drafts/messages/${data.id}`).delete();
+            } catch (deleteError) {
+              console.error(`Failed to delete draft ${data.id}`, deleteError);
+            }
+
+            res = await this.graphClient
+              .api('/me/mailfolders/drafts/messages')
+              .post(outlookMessage);
+          }
         } else {
-          // Create a new draft: POST /me/messages or POST /me/mailfolders/drafts/messages
-          res = await this.graphClient.api('/me/messages').post(messagePayload);
+          res = await this.graphClient.api('/me/mailfolders/drafts/messages').post(outlookMessage);
         }
 
         return res;
@@ -924,6 +991,7 @@ export class OutlookMailManager implements MailManager {
     fromEmail, // In Outlook, this is usually determined by the authenticated user unless using "send on behalf of" or "send as"
   }: IOutgoingMessage): Promise<Message> {
     // Outlook Graph API expects a Message object structure for sending/creating drafts
+    console.log(to);
     const outlookMessage: Message = {
       subject: subject,
       body: {
