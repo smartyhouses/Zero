@@ -28,7 +28,7 @@ export const AddConnectionDialog = ({
 }) => {
   const { connections, attach } = useBilling();
   const t = useTranslations();
-
+  const pathname = usePathname();
   const canCreateConnection = useMemo(() => {
     if (!connections?.remaining && !connections?.unlimited) return false;
     return (connections?.unlimited && !connections?.remaining) || (connections?.remaining ?? 0) > 0;
@@ -111,6 +111,7 @@ export const AddConnectionDialog = ({
                   onClick={async () =>
                     await authClient.linkSocial({
                       provider: provider.providerId,
+                      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/${pathname}`,
                     })
                   }
                 >
