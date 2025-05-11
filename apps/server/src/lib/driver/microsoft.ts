@@ -199,7 +199,11 @@ export class OutlookMailManager implements MailManager {
     const { folder, query: q, maxResults = 100, pageToken } = params;
 
     let folderId = this.getOutlookFolderId(folder);
-    if (!folderId) {
+    const isFlaggedFilter = folderId === 'flagged';
+
+    if (isFlaggedFilter) {
+      folderId = 'inbox';
+    } else if (!folderId) {
       folderId = folder;
     }
 
@@ -209,9 +213,17 @@ export class OutlookMailManager implements MailManager {
     //   request = request.search(`"${q}"`);
     // }
 
-    request = request.select(
-      'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,parentFolderId',
-    );
+    if (isFlaggedFilter) {
+      request = request.select(
+        'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,parentFolderId,flag',
+      );
+      // Filter for flagged emails only
+      request = request.filter("flag/flagStatus eq 'flagged'");
+    } else {
+      request = request.select(
+        'id,subject,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,parentFolderId',
+      );
+    }
 
     if (maxResults > 0) {
       request = request.top(maxResults);
@@ -298,6 +310,8 @@ export class OutlookMailManager implements MailManager {
         return 'deleteditems';
       case 'archive':
         return 'archive';
+      case 'important':
+        return 'flagged';
       case 'junk':
         return 'junkemail';
       default:
@@ -311,7 +325,7 @@ export class OutlookMailManager implements MailManager {
         const message: Message = await this.graphClient
           .api(`/me/messages/${id}`)
           .select(
-            'id,subject,body,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,attachments',
+            'id,subject,body,from,toRecipients,ccRecipients,bccRecipients,sentDateTime,receivedDateTime,isRead,internetMessageId,inferenceClassification,categories,attachments,flag',
           )
           .get();
 
@@ -331,40 +345,78 @@ export class OutlookMailManager implements MailManager {
 
         const attachmentsData = message.attachments || [];
 
-        const attachments = await Promise.all(
+        const allAttachments = await Promise.all(
           attachmentsData.map(async (att) => {
             if (!att.id || !att.name || att.size === undefined || att.contentType === undefined) {
               return null;
             }
-            // To get attachment content, you need another API call
-            const attachmentContent = await this.graphClient
-              .api(`/me/messages/${message.id}/attachments/${att.id}`)
-              .get();
 
-            if (!attachmentContent.contentBytes) {
+            try {
+              const attachmentContent = await this.graphClient
+                .api(`/me/messages/${message.id}/attachments/${att.id}`)
+                .get();
+
+              if (!attachmentContent.contentBytes) {
+                return null;
+              }
+
+              const isInline = !!attachmentContent.contentId;
+
+              return {
+                filename: att.name,
+                mimeType: att.contentType || 'application/octet-stream',
+                size: att.size,
+                attachmentId: att.id,
+                contentId: attachmentContent.contentId || undefined,
+                isInline,
+                headers: [],
+                body: attachmentContent.contentBytes,
+              };
+            } catch (error) {
+              console.error(`Failed to fetch attachment ${att.id}:`, error);
               return null;
             }
-
-            return {
-              filename: att.name,
-              mimeType: att.contentType,
-              size: att.size,
-              attachmentId: att.id,
-              headers: [],
-              body: attachmentContent.contentBytes,
-            };
           }),
         ).then((attachments) => attachments.filter((a): a is NonNullable<typeof a> => a !== null));
 
+        const inlineAttachments = allAttachments.filter((att) => att.isInline);
+        const regularAttachments = allAttachments.filter((att) => !att.isInline);
+
+        let processedHtml = decodedBody;
+        for (const attachment of inlineAttachments) {
+          if (attachment.contentId && attachment.body) {
+            const contentIdRef = `cid:${attachment.contentId}`;
+            const dataUri = `data:${attachment.mimeType};base64,${attachment.body}`;
+            processedHtml = processedHtml.replace(new RegExp(contentIdRef, 'g'), dataUri);
+          }
+        }
+
         const parsedData = this.parseOutlookMessage(message);
 
-        const fullEmailData = {
+        const fullEmailData: ParsedMessage = {
           ...parsedData,
-          body: '',
-          processedHtml: '',
+          body: decodedBody,
+          processedHtml: processedHtml,
           blobUrl: '',
-          decodedBody: decodedBody,
-          attachments,
+          attachments: regularAttachments.map((att) => ({
+            attachmentId: att.attachmentId,
+            filename: att.filename,
+            mimeType: att.mimeType,
+            size: att.size,
+            body: att.body || '',
+            headers: att.headers || [],
+          })),
+          id: parsedData.id || message.id || '',
+          title: parsedData.title || '',
+          subject: parsedData.subject || '',
+          tags: parsedData.tags || [],
+          sender: parsedData.sender || { email: '' },
+          to: parsedData.to || [],
+          cc: parsedData.cc || null,
+          bcc: parsedData.bcc || null,
+          tls: parsedData.tls || false,
+          receivedOn: parsedData.receivedOn || '',
+          unread: parsedData.unread || false,
         };
 
         return {
@@ -882,6 +934,7 @@ export class OutlookMailManager implements MailManager {
     inferenceClassification, // Might indicate if junk
     categories, // Outlook categories map to tags
     parentFolderId, // Can indicate folder (e.g. 'deleteditems')
+    flag,
     // headers, // Array of Header objects (name, value), doesn't exist in Outlook
   }: Message): Omit<
     ParsedMessage,
@@ -924,7 +977,18 @@ export class OutlookMailManager implements MailManager {
         },
       })) || [];
 
-    // Attempt to extract References and In-Reply-To from headers
+    if (flag && flag.flagStatus === 'flagged') {
+      tags.push({
+        id: 'important',
+        name: 'Important',
+        type: 'system',
+        color: {
+          backgroundColor: '#F8D7DA',
+          textColor: '#721C24',
+        },
+      });
+    }
+
     let references: string | undefined;
     let inReplyTo: string | undefined;
     let listUnsubscribe: string | undefined;
